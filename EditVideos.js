@@ -5,7 +5,7 @@ const fs = require("fs");
 // ====== CẤU HÌNH ======
 const srcL = path.join(__dirname, "Source", "srcVideoL");
 const srcR = path.join(__dirname, "Source", "srcVideoR");
-const bg = path.join(__dirname, "Source", "bg+logo", "bg.jpg");
+const bg = path.join(__dirname, "Source", "bg+logo", "bg.png");
 const mask = path.join(__dirname, "Source", "bg+logo", "mask.png");
 const logo = path.join(__dirname, "Source", "bg+logo", "logo.png");
 const outputDir = path.join(__dirname, "output");
@@ -27,7 +27,7 @@ let filterContent = `
 fs.writeFileSync(filterPath, filterContent);
 
 // ====== HÀM CHẠY FFmpeg CHO TỪNG CẶP ======
-function runFFmpeg(videoL, videoR, outputPath) {
+function runFFmpeg(videoL, videoR, outputPath) {  // ✅ thêm outputPath
   return new Promise((resolve, reject) => {
     const args = [
       "-i", videoL,
@@ -37,12 +37,16 @@ function runFFmpeg(videoL, videoR, outputPath) {
       "-i", logo,
       "-filter_complex_script", filterPath,
       "-map", "[out]",
+      "-map", "1:a",               // ✅ âm thanh từ videoR
+      "-c:a", "aac",
+      "-b:a", "192k",
       "-pix_fmt", "yuv420p",
       "-c:v", "libx264",
       "-crf", "20",
       "-preset", "veryfast",
+      "-shortest",
       "-y",
-      outputPath
+      outputPath                    // ✅ sử dụng outputPath (không dùng output)
     ];
 
     console.log(`▶️ Processing ${path.basename(videoL)} + ${path.basename(videoR)} → ${path.basename(outputPath)}`);
@@ -60,6 +64,7 @@ function runFFmpeg(videoL, videoR, outputPath) {
   });
 }
 
+
 // ====== HÀM MAIN ======
 (async () => {
   try {
@@ -75,12 +80,12 @@ function runFFmpeg(videoL, videoR, outputPath) {
 
     console.log(`🔄 Found ${total} video pairs to process.`);
 
-    // Chạy tuần tự từng cặp
     for (let i = 0; i < total; i++) {
       const videoL = path.join(srcL, listL[i]);
       const videoR = path.join(srcR, listR[i]);
-      const output = path.join(outputDir, `${i + 1}.mp4`);
-      await runFFmpeg(videoL, videoR, output);
+      const outputPath = path.join(outputDir, `${i + 1}.mp4`); // ✅ dùng outputPath
+
+      await runFFmpeg(videoL, videoR, outputPath); // ✅ truyền 3 tham số
     }
 
     console.log("🎉 All videos processed successfully!");
