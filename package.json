@@ -1,0 +1,24 @@
+{
+  "name": "reupvideoeditor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "EditVideos.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trnhi194/reupVideoEditor.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/trnhi194/reupVideoEditor/issues"
+  },
+  "homepage": "https://github.com/trnhi194/reupVideoEditor#readme",
+  "dependencies": {
+    "canvas": "^3.2.0",
+    "fluent-ffmpeg": "^2.1.3"
+  }
+}
