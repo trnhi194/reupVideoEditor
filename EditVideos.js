@@ -1,4 +1,5 @@
 const { spawn } = require("child_process");
+const { spawnSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
@@ -6,6 +7,8 @@ const fs = require("fs");
 const srcL = path.join(__dirname, "Source", "srcVideoL");
 const srcR = path.join(__dirname, "Source", "srcVideoR");
 const bg = path.join(__dirname, "Source", "bg+logo", "bg.png");
+//const bg = path.join(__dirname, "Source", "bg+logo", "chang.png");
+
 const mask = path.join(__dirname, "Source", "bg+logo", "mask.png");
 const logo = path.join(__dirname, "Source", "bg+logo", "logo.png");
 const outputDir = path.join(__dirname, "output");
@@ -25,6 +28,22 @@ let filterContent = `
 `.replace(/\n/g, " ");
 
 fs.writeFileSync(filterPath, filterContent);
+
+// Thêm hàm kiểm tra video stream (ffprobe phải có trong PATH)
+function hasVideoStream(file) {
+  try {
+    const res = spawnSync("ffprobe", [
+      "-v", "error",
+      "-select_streams", "v",
+      "-show_entries", "stream=index",
+      "-of", "csv=p=0",
+      file
+    ], { encoding: "utf8" });
+    return res.status === 0 && res.stdout && res.stdout.trim().length > 0;
+  } catch (e) {
+    return false;
+  }
+}
 
 // ====== HÀM CHẠY FFmpeg CHO TỪNG CẶP ======
 function runFFmpeg(videoL, videoR, outputPath) {  // ✅ thêm outputPath
@@ -84,6 +103,17 @@ function runFFmpeg(videoL, videoR, outputPath) {  // ✅ thêm outputPath
       const videoL = path.join(srcL, listL[i]);
       const videoR = path.join(srcR, listR[i]);
       const outputPath = path.join(outputDir, `${i + 1}.mp4`); // ✅ dùng outputPath
+
+      // validate inputs quickly
+      if (!fs.existsSync(videoL)) { console.warn(`⚠️ Missing file: ${videoL} — skip`); continue; }
+      if (!fs.existsSync(videoR)) { console.warn(`⚠️ Missing file: ${videoR} — skip`); continue; }
+      if (!hasVideoStream(videoL)) { console.warn(`⚠️ No video stream in ${videoL} — skip`); continue; }
+      if (!hasVideoStream(videoR)) { console.warn(`⚠️ No video stream in ${videoR} — skip`); continue; }
+
+      // optional: check bg/mask/logo exist
+      if (!fs.existsSync(bg) || !fs.existsSync(mask) || !fs.existsSync(logo)) {
+        console.error("❌ Missing bg/mask/logo files."); break;
+      }
 
       await runFFmpeg(videoL, videoR, outputPath); // ✅ truyền 3 tham số
     }
